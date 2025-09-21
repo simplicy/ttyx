@@ -109,12 +109,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2fd1289c04a9ea8cb22300a459a72a385d7c73d3259e2ed7dcb2af674838cfa9"
 
 [[package]]
-name = "colorsys"
-version = "0.6.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54261aba646433cb567ec89844be4c4825ca92a4f8afba52fc4dd88436e31bbd"
-
-[[package]]
 name = "compact_str"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -229,18 +223,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d630bccd429a5bb5a64b5e94f693bfc48c9f8566418fda4c494cc94f911f87cc"
 dependencies = [
  "powerfmt",
-]
-
-[[package]]
-name = "deskzilla"
-version = "0.1.0"
-dependencies = [
- "console_error_panic_hook",
- "ratzilla",
- "tachyonfx",
- "wasm-bindgen",
- "web-sys",
- "web-time",
 ]
 
 [[package]]
@@ -567,16 +549,16 @@ dependencies = [
 
 [[package]]
 name = "tachyonfx"
-version = "0.13.0"
+version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e12f441a3aa6821a20ebc350e51139806c875551910e8ac067f663e4ab28e82"
+checksum = "c849d35ad6c0c08124c757282b7c771ff2efc58f7e211cb7e45a37a5f9a66f8a"
 dependencies = [
  "bon",
- "colorsys",
  "compact_str 0.9.0",
  "ratatui",
  "simple-easing",
  "thiserror",
+ "unicode-width 0.2.0",
  "web-time",
 ]
 
@@ -626,6 +608,18 @@ name = "time-core"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "40868e7c1d2f0b8d73e4a8c7f0ff63af4f6d19be117e90bd73eb1d62cf831c6b"
+
+[[package]]
+name = "ttyx"
+version = "0.1.0"
+dependencies = [
+ "console_error_panic_hook",
+ "ratzilla",
+ "tachyonfx",
+ "wasm-bindgen",
+ "web-sys",
+ "web-time",
+]
 
 [[package]]
 name = "unicode-ident"

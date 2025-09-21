@@ -1,7 +1,7 @@
 use std::io;
 mod backend;
 mod fps;
-mod utils;
+//mod utils;
 
 use ratzilla::{
     ratatui::{
@@ -19,7 +19,7 @@ use crate::backend::{BackendType, MultiBackendBuilder};
 
 fn main() -> io::Result<()> {
     std::panic::set_hook(Box::new(console_error_panic_hook::hook));
-    let terminal = MultiBackendBuilder::with_fallback(BackendType::Canvas).build_terminal()?;
+    let terminal = MultiBackendBuilder::with_fallback(BackendType::Dom).build_terminal()?;
     let mut effect = fx::sequence(&[
         // first we "sweep in" the text from the left, before reversing the effect
         fx::ping_pong(fx::sweep_in(
@@ -44,6 +44,7 @@ fn ui(f: &mut Frame<'_>, effect: &mut Effect) {
     Block::default()
         .style(Style::default().bg(Color::Black))
         .render(f.area(), f.buffer_mut());
+    // Fill background with black
     let area = f.area().inner_centered(30, 1);
     let main_text = Text::from(vec![Line::from("Coming soon...")]);
     f.render_widget(main_text.light_magenta().centered(), area);

@@ -1,5 +1,5 @@
 use crate::fps;
-use crate::utils::inject_backend_footer;
+//use crate::utils::inject_backend_footer;
 use ratzilla::backend::canvas::CanvasBackendOptions;
 use ratzilla::backend::dom::DomBackendOptions;
 use ratzilla::backend::webgl2::WebGl2BackendOptions;
@@ -380,8 +380,8 @@ impl MultiBackendBuilder {
         let fps_backend: FpsTrackingBackend = backend.into();
         let terminal = Terminal::with_options(fps_backend, self.terminal_options)?;
 
-        // Inject footer (ignore errors)
-        let _ = inject_backend_footer(backend_type);
+        // // Inject footer (ignore errors)
+        // let _ = inject_backend_footer(backend_type);
 
         Ok(terminal)
     }
