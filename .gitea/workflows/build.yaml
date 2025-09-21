@@ -14,15 +14,12 @@ jobs:
         with:
           repository: ${{ vars.OWNER }}/${{ vars.REPO }}
           token: ${{ secrets.TOKEN }} # `GH_PAT` is a secret that contains your PAT
-      - name: Set up dependecies
-        run: |
-          apt-get update && apt-get install -y libssl-dev pkg-config valkey clang
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Set up Dependecies, Test, Fmt, and Check
         run: | 
           apt-get update && apt-get install -y libssl-dev pkg-config valkey clang &&
           cargo check && cargo test && 
           rustup component add rustfmt && 
           cargo fmt --all && rustup component add clippy
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Publish crate to Private Repository
         run: cargo publish --index ${{vars.INDEX}} --token "Bearer ${{secrets.TOKEN}}" 
