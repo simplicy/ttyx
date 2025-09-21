@@ -2,7 +2,9 @@
 name = "ttyx"
 version = "0.1.0"
 edition = "2021"
-publish = false
+description = "Web-TUI built with Rust"
+authors = ["Simplicy"]
+publish = true
 
 [dependencies]
 ratzilla = "0.1.0"
