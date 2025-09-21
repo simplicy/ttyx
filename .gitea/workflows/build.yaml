@@ -1,0 +1,28 @@
+on: [push, pull_request]
+
+name: Continuous integration
+
+jobs:
+  build-and-push:
+    name: build
+    runs-on: ubuntu-latest
+    environment:
+        APP_NAME: $${{vars.REPO}}
+    steps:
+      - name: Checkout repository
+        uses: ischanx/checkout@v4
+        with:
+          repository: ${{ vars.OWNER }}/${{ vars.REPO }}
+          token: ${{ secrets.TOKEN }} # `GH_PAT` is a secret that contains your PAT
+      - name: Set up dependecies
+        run: |
+          apt-get update && apt-get install -y libssl-dev pkg-config valkey clang
+      - name: Set up Dependecies, Test, Fmt, and Check
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        run: | 
+          apt-get update && apt-get install -y libssl-dev pkg-config valkey clang &&
+          cargo check && cargo test && 
+          rustup component add rustfmt && 
+          cargo fmt --all && rustup component add clippy
+      - name: Publish crate to Private Repository
+        run: cargo publish --index ${{vars.INDEX}} --token "Bearer ${{secrets.TOKEN}}" 
