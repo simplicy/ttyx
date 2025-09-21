@@ -6,7 +6,7 @@ use web_time::Instant;
 
 thread_local! {
     /// Thread-local FPS recorder instance for shared use across examples
-    static FPS_RECORDER: RefCell<Option<FpsRecorder>> = RefCell::new(None);
+    static FPS_RECORDER: RefCell<Option<FpsRecorder>> = const { RefCell::new(None) };
 }
 
 /// Records and calculates frames per second.
@@ -21,6 +21,7 @@ pub struct FpsRecorder {
     recorded_frame: [Instant; 16],
 }
 
+#[allow(dead_code)]
 impl FpsRecorder {
     /// Creates a new FPS recorder.
     pub fn new() -> Self {
@@ -82,6 +83,7 @@ pub fn record_frame() {
 }
 
 /// Get the current FPS value
+#[allow(dead_code)]
 pub fn get_current_fps() -> f32 {
     FPS_RECORDER.with(|recorder| {
         if let Some(ref fps_recorder) = *recorder.borrow() {
@@ -94,8 +96,7 @@ pub fn get_current_fps() -> f32 {
 
 /// Update the FPS display in the footer
 fn update_fps_display(fps: f32) {
-    let _ = (|| -> Result<(), JsValue> {
-
+    let exps = || -> Result<(), JsValue> {
         let fps_element = window()
             .and_then(|w| w.document())
             .and_then(|d| d.get_element_by_id("ratzilla-fps"));
@@ -105,5 +106,6 @@ fn update_fps_display(fps: f32) {
         }
 
         Ok(())
-    })();
+    };
+    exps().ok();
 }

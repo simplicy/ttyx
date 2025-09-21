@@ -12,7 +12,6 @@ use ratzilla::{
 };
 use tachyonfx::{
     fx, CenteredShrink, Duration, Effect, EffectRenderer, EffectTimer, Interpolation, Motion,
-    Shader,
 };
 
 use crate::backend::{BackendType, MultiBackendBuilder};

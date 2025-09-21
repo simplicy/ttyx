@@ -68,7 +68,9 @@ pub enum RatzillaBackend {
     Canvas(CanvasBackend),
     WebGl2(WebGl2Backend),
 }
+// disable unused warnings for now
 
+#[allow(dead_code)]
 impl RatzillaBackend {
     /// Get the backend type for this backend instance.
     pub fn backend_type(&self) -> BackendType {
@@ -177,6 +179,7 @@ pub struct FpsTrackingBackend {
     inner: RatzillaBackend,
 }
 
+#[allow(dead_code)]
 impl FpsTrackingBackend {
     /// Create a new FPS tracking backend that wraps the given backend.
     ///
@@ -289,6 +292,7 @@ pub struct MultiBackendBuilder {
     webgl2_options: WebGl2BackendOptions,
 }
 
+#[allow(dead_code)]
 impl MultiBackendBuilder {
     /// Create a new builder with the specified fallback backend type.
     ///
