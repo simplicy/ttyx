@@ -44,11 +44,8 @@ fn ui(f: &mut Frame<'_>, effect: &mut Effect) {
     Block::default()
         .style(Style::default().bg(Color::Black))
         .render(f.area(), f.buffer_mut());
-    let area = f.area().inner_centered(25, 2);
-    let main_text = Text::from(vec![
-        Line::from("Hello, there!"),
-        Line::from("Something will be coming soon..."),
-    ]);
+    let area = f.area().inner_centered(30, 1);
+    let main_text = Text::from(vec![Line::from("Coming soon...")]);
     f.render_widget(main_text.light_magenta().centered(), area);
     if effect.running() {
         f.render_effect(effect, area, Duration::from_millis(100));
