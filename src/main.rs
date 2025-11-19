@@ -1,53 +1,45 @@
-use std::io;
+mod app;
 mod backend;
 mod fps;
-//mod utils;
 
-use ratzilla::{
-    ratatui::{
-        prelude::*,
-        widgets::{Block, Clear},
-    },
-    WebRenderer,
-};
-use tachyonfx::{
-    fx, CenteredShrink, Duration, Effect, EffectRenderer, EffectTimer, Interpolation, Motion,
-};
-
+use crate::app::App;
 use crate::backend::{BackendType, MultiBackendBuilder};
+use ratzilla::backend::cursor::CursorShape;
+use ratzilla::backend::dom::DomBackendOptions;
+use ratzilla::backend::webgl2::WebGl2BackendOptions;
+use ratzilla::WebRenderer;
+use std::{cell::RefCell, io, rc::Rc};
 
 fn main() -> io::Result<()> {
-    std::panic::set_hook(Box::new(console_error_panic_hook::hook));
-    let terminal = MultiBackendBuilder::with_fallback(BackendType::Dom).build_terminal()?;
-    let mut effect = fx::sequence(&[
-        // first we "sweep in" the text from the left, before reversing the effect
-        fx::ping_pong(fx::sweep_in(
-            Motion::LeftToRight,
-            10,
-            0,
-            Color::DarkGray,
-            EffectTimer::from_ms(2000, Interpolation::QuadIn),
-        )),
-        // then we coalesce the text back to its original state
-        // (note that EffectTimers can be constructed from a tuple of duration and interpolation)
-        fx::coalesce((800, Interpolation::SineOut)),
-    ]);
+    let dom_options = DomBackendOptions::new(None, CursorShape::SteadyUnderScore);
 
-    terminal.draw_web(move |f| ui(f, &mut effect));
+    let webgl2_options = WebGl2BackendOptions::new()
+        .cursor_shape(CursorShape::SteadyUnderScore)
+        .enable_console_debug_api()
+        .enable_mouse_selection();
+
+    let terminal = MultiBackendBuilder::with_fallback(BackendType::Dom)
+        .dom_options(dom_options)
+        .webgl2_options(webgl2_options)
+        .build_terminal()?;
+
+    let app = Rc::new(RefCell::new(App::new()));
+
+    terminal.on_key_event({
+        let event_state = app.clone();
+        move |key_event| {
+            let mut state = event_state.borrow_mut();
+            state.handle_events(key_event);
+        }
+    });
+
+    terminal.draw_web({
+        let render_state = app.clone();
+        move |frame| {
+            let state = render_state.borrow();
+            state.draw(frame);
+        }
+    });
 
     Ok(())
-}
-
-fn ui(f: &mut Frame<'_>, effect: &mut Effect) {
-    Clear.render(f.area(), f.buffer_mut());
-    Block::default()
-        .style(Style::default().bg(Color::Black))
-        .render(f.area(), f.buffer_mut());
-    // Fill background with black
-    let area = f.area().inner_centered(30, 1);
-    let main_text = Text::from(vec![Line::from("Coming soon...")]);
-    f.render_widget(main_text.light_magenta().centered(), area);
-    if effect.running() {
-        f.render_effect(effect, area, Duration::from_millis(100));
-    }
 }
