@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use derive_deref::{Deref, DerefMut};
+use ratatui::widgets::Wrap;
 use ratzilla::event::KeyEvent;
 use ratzilla::ratatui::layout::{Constraint, Layout, Position};
 use ratzilla::ratatui::style::{Modifier, Style, Stylize};
@@ -21,10 +22,28 @@ pub struct NotFound {}
 
 impl Component for NotFound {
     fn draw(&self, frame: &mut Frame) {
-        let styles = Style::default().add_modifier(Modifier::RAPID_BLINK);
-        let text = Text::from(Line::from("Testing")).patch_style(styles);
-        let help_message = Paragraph::new(text);
-        frame.render_widget(help_message, frame.area());
+        let vertical = Layout::horizontal([
+            Constraint::Fill(1),
+            Constraint::Fill(1),
+            Constraint::Fill(1),
+        ]);
+        let [_, input_area, _] = vertical.areas(frame.area());
+        let input = Layout::vertical([
+            Constraint::Min(1),
+            Constraint::Length(2),
+            Constraint::Length(3),
+            Constraint::Min(1),
+        ]);
+        let [_, text_area, input_area, _] = input.areas(input_area);
+        let title = Text::from(Line::from("[404]"));
+
+        frame.render_widget(Paragraph::new(title).centered(), text_area);
+
+        let text = Text::from(Line::from("Page not found!"));
+        frame.render_widget(
+            Paragraph::new(text).centered().wrap(Wrap { trim: false }),
+            input_area,
+        );
     }
 }
 

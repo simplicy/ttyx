@@ -14,6 +14,7 @@ use ratzilla::ratatui::{
 use ratzilla::{event::KeyCode, WebRenderer};
 use tachyonfx::{Effect, EffectRenderer};
 
+use crate::app::App;
 use crate::pages::Component;
 
 pub enum InputMode {

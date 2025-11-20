@@ -1,5 +1,5 @@
-use crate::fps;
 //use crate::utils::inject_backend_footer;
+use super::fps;
 use ratzilla::backend::canvas::CanvasBackendOptions;
 use ratzilla::backend::dom::DomBackendOptions;
 use ratzilla::backend::webgl2::WebGl2BackendOptions;

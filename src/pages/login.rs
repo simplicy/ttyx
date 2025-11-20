@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
+use crate::app::{App, Page};
+use crate::utils::{Action, Result};
 use derive_deref::{Deref, DerefMut};
+use ratatui::widgets::Wrap;
 use ratzilla::event::KeyEvent;
 use ratzilla::ratatui::layout::{Constraint, Layout, Position};
 use ratzilla::ratatui::style::{Modifier, Style, Stylize};
@@ -14,6 +17,7 @@ use ratzilla::ratatui::{
 use ratzilla::{event::KeyCode, WebRenderer};
 use tachyonfx::fx::RepeatMode;
 use tachyonfx::{fx, Duration, Effect, EffectRenderer, Interpolation};
+use tokio::sync::mpsc::UnboundedSender;
 
 use crate::pages::Component;
 
@@ -32,12 +36,24 @@ pub struct Login {
     input_mode: InputMode,
     /// History of recorded messages
     messages: Vec<String>,
+    tx: Option<UnboundedSender<Action>>,
 }
 
 impl Component for Login {
+    fn register_action_handler(&mut self, tx: UnboundedSender<Action>) -> Result<()> {
+        self.tx = Some(tx);
+        Ok(())
+    }
     fn handle_events(&mut self, key_event: KeyEvent) -> Option<bool> {
         match self.input_mode {
             InputMode::Normal => {
+                if let KeyCode::Char('i') = key_event.code {
+                    self.tx
+                        .as_ref()
+                        .unwrap()
+                        .send(Action::ChangePage(Page::Home))
+                        .ok();
+                }
                 if let KeyCode::Char('e') = key_event.code {
                     self.input_mode = InputMode::Editing;
                 }
@@ -67,11 +83,16 @@ impl Component for Login {
         let [_, input_area, _] = vertical.areas(frame.area());
         let input = Layout::vertical([
             Constraint::Min(1),
+            Constraint::Max(3),
             Constraint::Length(3),
             Constraint::Min(1),
         ]);
-        let [_, input_area, _] = input.areas(input_area);
+        let [_, text_area, input_area, _] = input.areas(input_area);
 
+        let text = Text::from(Line::from(
+            "Please enter your email to login. Press 'e' to begin typing; Press enter to submit.",
+        ));
+        frame.render_widget(Paragraph::new(text).wrap(Wrap { trim: false }), text_area);
         let input = Paragraph::new(self.input.as_str())
             .style(match self.input_mode {
                 InputMode::Normal => Style::default(),
@@ -108,6 +129,7 @@ impl Login {
             input_mode: InputMode::Normal,
             messages: Vec::new(),
             character_index: 0,
+            tx: None,
         }
     }
     fn move_cursor_left(&mut self) {
@@ -172,5 +194,6 @@ impl Login {
         self.messages.push(self.input.clone());
         self.input.clear();
         self.reset_cursor();
+        self.input_mode = InputMode::Normal;
     }
 }
