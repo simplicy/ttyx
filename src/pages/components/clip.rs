@@ -1,41 +1,17 @@
-use std::{cell::RefCell, io, rc::Rc};
+use std::cell::RefCell;
 
 use ratatui::{
     layout::Alignment,
     style::{Color, Stylize},
     widgets::{Block, BorderType, Paragraph},
-    Frame, Terminal,
-};
-mod backend;
-mod fps;
-use crate::backend::{BackendType, MultiBackendBuilder};
-
-use ratzilla::{
-    event::{KeyCode, KeyEvent},
-    WebRenderer,
+    Frame,
 };
 
-fn main() -> io::Result<()> {
-    std::panic::set_hook(Box::new(console_error_panic_hook::hook));
-    let terminal = MultiBackendBuilder::with_fallback(BackendType::Dom).build_terminal()?;
+use ratzilla::event::{KeyCode, KeyEvent};
 
-    let state = Rc::new(App::default());
-    let event_state = Rc::clone(&state);
-    terminal.on_key_event(move |key_event| {
-        let event_state = event_state.clone();
-        wasm_bindgen_futures::spawn_local(
-            async move { event_state.handle_events(key_event).await },
-        );
-    });
+use crate::pages::Component;
 
-    let render_state = Rc::clone(&state);
-    terminal.draw_web(move |frame| {
-        render_state.render(frame);
-    });
-
-    Ok(())
-}
-
+#[derive(Clone)]
 pub struct Clip {
     text: RefCell<String>,
 }
@@ -52,8 +28,8 @@ impl Default for Clip {
     }
 }
 
-impl Clip {
-    pub fn render(&self, frame: &mut Frame) {
+impl Component for Clip {
+    fn draw(&self, frame: &mut Frame) {
         let block = Block::bordered()
             .title("Clipboard Example")
             .title_alignment(Alignment::Center)
@@ -70,21 +46,35 @@ impl Clip {
         }
     }
 
-    async fn handle_events(&self, key_event: KeyEvent) {
-        match key_event.code {
-            KeyCode::Char('c') if key_event.ctrl => {
-                self.set_clipboard("i like rats").await;
-            }
-            KeyCode::Char('v') if key_event.ctrl => {
-                if let Ok(mut text) = self.text.try_borrow_mut() {
-                    let clipboard_text = self.get_clipboard().await;
-                    *text = clipboard_text;
-                }
-            }
-            _ => {}
-        }
+    fn handle_events(&mut self, key_event: KeyEvent) -> Option<bool> {
+        // match key_event.code {
+        //     KeyCode::Char('c') if key_event.ctrl => {
+        //         let clip = self.clone();
+        //         tokio::spawn({
+        //             let text = self.text.borrow().clone();
+        //             async move {
+        //                 clip.set_clipboard(&text).await;
+        //             }
+        //         });
+        //     }
+        //     KeyCode::Char('v') if key_event.ctrl => {
+        //         if let Ok(mut text) = self.text.try_borrow_mut() {
+        //             let clip = self.clone();
+        //             tokio::spawn(async move {
+        //                 let clipboard_text = self.get_clipboard().await;
+        //                 *text = clipboard_text;
+        //             });
+        //         }
+        //     }
+        //     _ => {}
+        // }
+        None
     }
-
+}
+impl Clip {
+    pub fn new() -> Self {
+        Self::default()
+    }
     async fn set_clipboard(&self, text: &str) {
         let window = web_sys::window().unwrap();
         let nav = window.navigator().clipboard();

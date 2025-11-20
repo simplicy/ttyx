@@ -14,13 +14,15 @@ use ratzilla::ratatui::{
 use ratzilla::{event::KeyCode, WebRenderer};
 use tachyonfx::{Effect, EffectRenderer};
 
+use crate::pages::Component;
+
 pub enum InputMode {
     Normal,
     Editing,
 }
 
 /// App holds the state of the application
-pub struct Input {
+pub struct Message {
     /// Current value of the input box
     input: String,
     /// Position of cursor in the editor area.
@@ -31,32 +33,27 @@ pub struct Input {
     messages: Vec<String>,
 }
 
-impl Component for Input {
-    const fn new() -> Self {
-        Self {
-            input: String::new(),
-            input_mode: InputMode::Normal,
-            messages: Vec::new(),
-            character_index: 0,
-        }
-    }
-
-    fn handle_events(&mut self, key_event: KeyEvent) {
+impl Component for Message {
+    fn handle_events(&mut self, key_event: KeyEvent) -> Option<bool> {
         match self.input_mode {
             InputMode::Normal => {
                 if let KeyCode::Char('e') = key_event.code {
                     self.input_mode = InputMode::Editing;
                 }
+                None
             }
-            InputMode::Editing => match key_event.code {
-                KeyCode::Enter => self.submit_message(),
-                KeyCode::Char(to_insert) => self.enter_char(to_insert),
-                KeyCode::Backspace => self.delete_char(),
-                KeyCode::Left => self.move_cursor_left(),
-                KeyCode::Right => self.move_cursor_right(),
-                KeyCode::Esc => self.input_mode = InputMode::Normal,
-                _ => {}
-            },
+            InputMode::Editing => {
+                match key_event.code {
+                    KeyCode::Enter => self.submit_message(),
+                    KeyCode::Char(to_insert) => self.enter_char(to_insert),
+                    KeyCode::Backspace => self.delete_char(),
+                    KeyCode::Left => self.move_cursor_left(),
+                    KeyCode::Right => self.move_cursor_right(),
+                    KeyCode::Esc => self.input_mode = InputMode::Normal,
+                    _ => {}
+                }
+                Some(true)
+            }
         }
     }
 
@@ -124,7 +121,15 @@ impl Component for Input {
     }
 }
 
-impl Input {
+impl Message {
+    pub fn new() -> Self {
+        Self {
+            input: String::new(),
+            input_mode: InputMode::Normal,
+            messages: Vec::new(),
+            character_index: 0,
+        }
+    }
     fn move_cursor_left(&mut self) {
         let cursor_moved_left = self.character_index.saturating_sub(1);
         self.character_index = self.clamp_cursor(cursor_moved_left);

@@ -1,6 +1,7 @@
 mod app;
 mod backend;
 mod fps;
+mod pages;
 
 use crate::app::App;
 use crate::backend::{BackendType, MultiBackendBuilder};
