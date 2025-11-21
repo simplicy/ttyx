@@ -6,6 +6,7 @@ use crate::app::Page;
 pub enum Action {
     Tick,
     Render,
+    SubmitEmail(String),
     Resize(u16, u16),
     Mouse(MouseEvent),
     ToggleNav,
@@ -57,4 +58,5 @@ pub enum Action {
     EnterProcessing,
     Cycle,
     Update,
+    FocusInput,
 }

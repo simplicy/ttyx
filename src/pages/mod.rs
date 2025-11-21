@@ -1,14 +1,11 @@
 pub mod components;
 mod login;
 pub mod notfound;
-use crate::{
-    app::App,
-    utils::{Action, Result},
-};
+use crate::utils::{Action, Result};
 pub use login::*;
 use ratzilla::{
-    event::KeyEvent,
-    ratatui::{layout::Rect, Frame},
+    event::{KeyEvent, MouseEvent},
+    ratatui::Frame,
 };
 use tokio::sync::mpsc::UnboundedSender;
 
@@ -33,6 +30,10 @@ pub trait Component {
         Ok(())
     }
     #[allow(unused_variables)]
+    fn handle_mouse(&mut self, mouse: MouseEvent) -> Result<Option<Action>> {
+        Ok(None)
+    }
+    #[allow(unused_variables)]
     fn handle_actions(&mut self, action: Option<Action>) -> Result<Option<Action>> {
         Ok(None)
     }
@@ -49,5 +50,5 @@ pub trait Component {
     // fn update(&mut self, action: Action, ctx: &Ctx) -> Result<Option<Action>> {
     //     Ok(None)
     // }
-    fn draw(&self, f: &mut Frame<'_>) {}
+    fn draw(&mut self, f: &mut Frame<'_>) {}
 }

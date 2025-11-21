@@ -39,6 +39,13 @@ fn main() -> io::Result<()> {
             state.handle_events(key_event);
         }
     });
+    terminal.on_mouse_event({
+        let event_state = app.clone();
+        move |mouse_event| {
+            let mut state = event_state.borrow_mut();
+            state.handle_mouse(mouse_event);
+        }
+    });
     app.borrow_mut().register_action_handler(action_tx).unwrap();
     // Run the application
     terminal.draw_web({

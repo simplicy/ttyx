@@ -1,23 +1,22 @@
-use crate::app::Page;
+use std::collections::HashMap;
+
+use crate::app::{App, Page};
 use crate::utils::{Action, Result};
-use crate::APP_NAME;
+use derive_deref::{Deref, DerefMut};
 use ratatui::widgets::Wrap;
-use ratzilla::event::{KeyCode, MouseButton, MouseEvent};
-use ratzilla::event::{KeyEvent, MouseEventKind};
+use ratzilla::event::KeyEvent;
 use ratzilla::ratatui::layout::{Constraint, Layout, Position};
-use ratzilla::ratatui::prelude::*;
-use ratzilla::ratatui::style::{Style, Stylize};
-use ratzilla::ratatui::text::{Line, Text};
+use ratzilla::ratatui::style::{Modifier, Style, Stylize};
+use ratzilla::ratatui::text::{Line, Span, Text};
+use ratzilla::ratatui::widgets::{List, ListItem};
 use ratzilla::ratatui::Frame;
 use ratzilla::ratatui::{
     style::Color,
-    widgets::Clear,
     widgets::{Block, Paragraph},
 };
+use ratzilla::{event::KeyCode, WebRenderer};
 use tachyonfx::fx::RepeatMode;
-use tachyonfx::{
-    fx, CenteredShrink, Duration, Effect, EffectRenderer, EffectTimer, Interpolation, Motion,
-};
+use tachyonfx::{fx, Duration, Effect, EffectRenderer, Interpolation};
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::pages::Component;
@@ -39,28 +38,12 @@ pub struct Login {
     messages: Vec<String>,
     // Action Handler
     tx: Option<UnboundedSender<Action>>,
-    // Effect
-    intro_effect: Effect,
 }
 
 impl Component for Login {
     fn register_action_handler(&mut self, tx: UnboundedSender<Action>) -> Result<()> {
         self.tx = Some(tx);
         Ok(())
-    }
-    fn handle_mouse(&mut self, mouse: MouseEvent) -> Result<Option<Action>> {
-        match mouse.button {
-            MouseButton::Left => match mouse.event {
-                MouseEventKind::Pressed => {
-                    // Set focus to input box on click
-                    self.input_mode = InputMode::Editing;
-                }
-
-                _ => {}
-            },
-            _ => {}
-        };
-        Ok(None)
     }
     fn handle_events(&mut self, key_event: KeyEvent) -> Option<bool> {
         match self.input_mode {
@@ -92,31 +75,24 @@ impl Component for Login {
         }
     }
 
-    fn draw(&mut self, frame: &mut Frame) {
-        Clear.render(frame.area(), frame.buffer_mut());
-        let area = frame.area().inner_centered(40, 25);
+    fn draw(&self, frame: &mut Frame) {
+        let vertical = Layout::horizontal([
+            Constraint::Min(1),
+            Constraint::Length(50),
+            Constraint::Min(1),
+        ]);
+        let [_, input_area, _] = vertical.areas(frame.area());
         let input = Layout::vertical([
             Constraint::Min(1),
-            Constraint::Length(2),
-            Constraint::Length(1),
+            Constraint::Max(3),
             Constraint::Length(3),
-            Constraint::Length(2),
             Constraint::Min(1),
         ]);
-        let [_, main_area, text_area, input_area, help_area, _] = input.areas(area);
-        let string = APP_NAME
-            .to_uppercase()
-            .chars()
-            .map(|c| format!(" {} ", c))
-            .collect::<String>();
+        let [_, text_area, input_area, _] = input.areas(input_area);
 
-        let main_text = Text::from(vec![
-            Line::from(format!("-------- {} --------", string)).bold()
-        ]);
-        //render_menu(f, state);
-        frame.render_widget(main_text.light_green().centered(), main_area);
-
-        let text = Text::from(Line::from("Please enter your email to login."));
+        let text = Text::from(Line::from(
+            "Please enter your email to login. Press 'e' to begin typing; Press enter to submit.",
+        ));
         frame.render_widget(Paragraph::new(text).wrap(Wrap { trim: false }), text_area);
         let input = Paragraph::new(self.input.as_str())
             .style(match self.input_mode {
@@ -125,12 +101,6 @@ impl Component for Login {
             })
             .block(Block::bordered().title("Email"));
         frame.render_widget(input, input_area);
-        let help = Text::from(Line::from(match self.input_mode {
-            InputMode::Normal => "Press 'e' to start editing.",
-            InputMode::Editing => "Press 'Esc' to stop editing, 'Enter' to submit the email.",
-        }));
-        frame.render_widget(Paragraph::new(help).wrap(Wrap { trim: false }), help_area);
-
         match self.input_mode {
             // Hide the cursor. `Frame` does this by default, so we don't need to do anything here
             InputMode::Normal => {}
@@ -145,7 +115,11 @@ impl Component for Login {
                 input_area.y + 1,
             )),
         }
-        frame.render_effect(&mut self.intro_effect, main_area, Duration::from_millis(40));
+        // let mut effect = fx::sequence(&[
+        //     fx::coalesce((3000, Interpolation::SineOut)),
+        //     fx::sleep(1000),
+        // ]);
+        // frame.render_effect(&mut effect, input_area, Duration::from_millis(40));
     }
 }
 
@@ -157,25 +131,6 @@ impl Login {
             messages: Vec::new(),
             character_index: 0,
             tx: None,
-            intro_effect: fx::sequence(&[
-                // fx::ping_pong(fx::sweep_in(
-                //     Motion::LeftToRight,
-                //     10,
-                //     0,
-                //     Color::Black,
-                //     EffectTimer::from_ms(3000, Interpolation::QuadIn),
-                // )),
-                fx::coalesce((3000, Interpolation::SineOut)),
-                fx::sleep(1000),
-                fx::repeat(
-                    fx::hsl_shift(
-                        Some([120.0, 25.0, 25.0]),
-                        None,
-                        (5000, Interpolation::Linear),
-                    ),
-                    RepeatMode::Forever,
-                ),
-            ]),
         }
     }
     fn move_cursor_left(&mut self) {
@@ -241,10 +196,5 @@ impl Login {
         self.input.clear();
         self.reset_cursor();
         self.input_mode = InputMode::Normal;
-        self.tx
-            .as_ref()
-            .unwrap()
-            .send(Action::SubmitEmail(self.input.clone()))
-            .ok();
     }
 }

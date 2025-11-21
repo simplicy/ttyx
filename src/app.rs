@@ -26,33 +26,11 @@ pub enum Page {
     Help,
 }
 
-pub struct EffectConfig {
-    effect: Option<Effect>,
-    duration_ms: Option<u64>,
-    interpolation: tachyonfx::Interpolation,
-}
-impl Default for EffectConfig {
-    fn default() -> Self {
-        EffectConfig {
-            effect: None,
-            duration_ms: Some(500),
-            interpolation: tachyonfx::Interpolation::Linear,
-        }
-    }
-}
-
-/// used for pages and components
-pub struct View {
-    title: String,
-    pub content: Box<dyn Component>,
-    effect: Option<Effect>,
-    exit_effect: Option<Effect>,
-    area: Option<Rect>,
-}
 enum InputMode {
     Normal,
-    Editing,
+    Other,
 }
+pub struct View(Box<dyn Component>);
 
 #[derive(Deref, DerefMut)]
 pub struct Pages(pub HashMap<Page, View>);
@@ -82,38 +60,29 @@ impl App {
             input_mode: InputMode::Normal,
             current_mode: Page::default(),
             pages: Pages(HashMap::from([
-                (
-                    Page::Login,
-                    View {
-                        title: "Login".to_string(),
-                        content: Box::new(login),
-                        effect: None,
-                        area: None,
-                        exit_effect: None,
-                    },
-                ),
-                (
-                    Page::Settings,
-                    View {
-                        title: "Settings".to_string(),
-                        area: None,
-                        content: Box::new(input),
-                        effect: None,
-                        exit_effect: None,
-                    },
-                ),
+                (Page::Login, View(Box::new(login))),
+                (Page::Settings, View(Box::new(input))),
+                (Page::Help, View(Box::new(clip))),
             ])),
         }
     }
 
     pub fn register_action_handler(&mut self, tx: UnboundedSender<Action>) -> Result<()> {
         for (_, page) in self.pages.iter_mut() {
-            page.content.register_action_handler(tx.clone())?;
+            page.0.register_action_handler(tx.clone())?;
         }
         for component in self.components.iter_mut() {
-            component.content.register_action_handler(tx.clone())?;
+            component.0.register_action_handler(tx.clone())?;
         }
         Ok(())
+    }
+    pub fn handle_mouse(&mut self, mouse_event: ratzilla::event::MouseEvent) {
+        // handle events for only current page
+        self.pages.iter_mut().for_each(|(page_type, page)| {
+            if *page_type == self.current_mode {
+                page.0.handle_mouse(mouse_event.clone()).ok();
+            }
+        });
     }
 
     pub fn handle_events(&mut self, key_event: KeyEvent) {
@@ -121,7 +90,7 @@ impl App {
         // handle events for only current page
         self.pages.iter_mut().for_each(|(page_type, page)| {
             if *page_type == self.current_mode {
-                let handled_page = page.content.handle_events(key_event.clone());
+                let handled_page = page.0.handle_events(key_event.clone());
                 if handled_page.is_some() {
                     handled = handled_page;
                 }
@@ -136,10 +105,11 @@ impl App {
                             self.current_mode = Page::Settings;
                         }
                         KeyCode::Char('h') => self.current_mode = Page::Login,
+                        KeyCode::Char('m') => self.current_mode = Page::Help,
                         _ => {}
                     }
                 }
-                InputMode::Editing => {
+                InputMode::Other => {
                     match key_event.code {
                         KeyCode::Char('q') => {
                             // Exit application
@@ -161,6 +131,10 @@ impl App {
                 Action::ChangePage(page) => {
                     self.current_mode = page;
                 }
+                Action::SubmitEmail(email) => {
+                    // TODO: Subimt to api endpoint
+                    self.current_mode = Page::Settings;
+                }
                 _ => {}
             }
         }
@@ -171,23 +145,15 @@ impl App {
         // Send over actions to be handled
         self.handle_actions(rx)?;
         // Show page
-        match self.pages.get(&self.current_mode) {
+        match self.pages.get_mut(&self.current_mode) {
             Some(page) => {
-                page.content.draw(frame);
+                page.0.draw(frame);
             }
             None => NotFound::new().draw(frame),
         }
         // Handle the Window title
-        if self.pages.get(&self.current_mode).is_some() {
-            utils::set_document_title(&format!(
-                "{} - {}",
-                APP_NAME,
-                self.pages
-                    .get(&self.current_mode)
-                    .map(|p| p.title.as_str())
-                    .unwrap_or("Not Found"),
-            ))
-            .ok();
+        if let Some(get) = self.pages.get(&self.current_mode) {
+            utils::set_document_title(&format!("{} - {:?}", APP_NAME, self.current_mode)).ok();
         }
         Ok(())
         //frame.render_effect(&mut self.intro_effect, area, Duration::from_millis(40));

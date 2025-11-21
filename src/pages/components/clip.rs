@@ -1,18 +1,23 @@
 use std::cell::RefCell;
 
-use ratatui::{
-    layout::Alignment,
-    style::{Color, Stylize},
-    widgets::{Block, BorderType, Paragraph},
-    Frame,
+use layout::Offset;
+use ratatui::{style::Stylize, Frame};
+use ratzilla::{
+    event::KeyEvent,
+    ratatui::{prelude::*, widgets::Clear},
+    widgets::Hyperlink,
 };
-
-use ratzilla::event::{KeyCode, KeyEvent};
+use tachyonfx::{
+    fx::{self, RepeatMode},
+    CenteredShrink, Duration, Effect, EffectRenderer, Interpolation,
+};
 
 use crate::pages::Component;
 
 #[derive(Clone)]
 pub struct Clip {
+    intro_effect: Effect,
+    menu_effect: Option<Effect>,
     text: RefCell<String>,
 }
 
@@ -24,26 +29,43 @@ impl Default for Clip {
         );
         Self {
             text: RefCell::new(text),
+            menu_effect: None,
+            intro_effect: fx::sequence(&[
+                // fx::ping_pong(fx::sweep_in(
+                //     Motion::LeftToRight,
+                //     10,
+                //     0,
+                //     Color::Black,
+                //     EffectTimer::from_ms(3000, Interpolation::QuadIn),
+                // )),
+                fx::coalesce((3000, Interpolation::SineOut)),
+                fx::sleep(1000),
+                fx::repeat(
+                    fx::hsl_shift(
+                        Some([120.0, 25.0, 25.0]),
+                        None,
+                        (5000, Interpolation::Linear),
+                    ),
+                    RepeatMode::Forever,
+                ),
+            ]),
         }
     }
 }
 
 impl Component for Clip {
-    fn draw(&self, frame: &mut Frame) {
-        let block = Block::bordered()
-            .title("Clipboard Example")
-            .title_alignment(Alignment::Center)
-            .border_type(BorderType::Rounded);
-
-        if let Ok(text) = self.text.try_borrow() {
-            let paragraph = Paragraph::new(text.to_string())
-                .block(block)
-                .fg(Color::White)
-                .bg(Color::Black)
-                .centered();
-
-            frame.render_widget(paragraph, frame.area());
-        }
+    fn draw(&mut self, frame: &mut Frame) {
+        Clear.render(frame.area(), frame.buffer_mut());
+        let area = frame.area().inner_centered(33, 2);
+        let main_text = Text::from(vec![
+            Line::from("| S Y M P I L |").bold(),
+            Line::from("Coming soon...").italic(),
+        ]);
+        //render_menu(f, state);
+        frame.render_widget(main_text.light_green().centered(), area);
+        let link = Hyperlink::new("https://github.com/orhun/ratzilla".red());
+        frame.render_widget(link, area.offset(Offset { x: 0, y: 4 }));
+        frame.render_effect(&mut self.intro_effect, area, Duration::from_millis(40));
     }
 
     fn handle_events(&mut self, key_event: KeyEvent) -> Option<bool> {

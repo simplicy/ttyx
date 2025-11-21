@@ -31,3 +31,4 @@ log = "0.4.28"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
 tokio = { version = "1.48.0", features = ["sync", "rt"] }
+reqwest = "0.12.24"

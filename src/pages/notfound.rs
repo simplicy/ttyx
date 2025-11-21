@@ -21,7 +21,7 @@ use crate::pages::Component;
 pub struct NotFound {}
 
 impl Component for NotFound {
-    fn draw(&self, frame: &mut Frame) {
+    fn draw(&mut self, frame: &mut Frame) {
         let vertical = Layout::horizontal([
             Constraint::Fill(1),
             Constraint::Fill(1),
