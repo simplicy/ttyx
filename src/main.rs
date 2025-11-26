@@ -46,13 +46,20 @@ fn main() -> io::Result<()> {
             state.handle_mouse(mouse_event);
         }
     });
-    app.borrow_mut().register_action_handler(action_tx).unwrap();
+    app.borrow_mut()
+        .register_action_handler(action_tx.clone())
+        .unwrap();
     // Run the application
     terminal.draw_web({
         let render_state = app.clone();
         move |frame| {
-            App::run(&mut render_state.borrow_mut(), frame, &mut action_rx)
-                .expect("Failed to run app");
+            App::run(
+                &mut render_state.borrow_mut(),
+                frame,
+                &mut action_rx,
+                &action_tx,
+            )
+            .expect("Failed to run app");
         }
     });
 

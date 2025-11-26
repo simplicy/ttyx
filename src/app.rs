@@ -40,6 +40,8 @@ pub struct UiComponents(Vec<View>);
 
 /// App holds the state of the application
 pub struct App {
+    // Tx sender
+    tx: Option<UnboundedSender<Action>>,
     /// Current input mode
     input_mode: InputMode,
     // Current application mode/page
@@ -56,6 +58,7 @@ impl App {
         let clip = Clip::new();
         let login = Login::new();
         Self {
+            tx: None,
             components: UiComponents(Vec::new()),
             input_mode: InputMode::Normal,
             current_mode: Page::default(),
@@ -134,6 +137,30 @@ impl App {
                 Action::SubmitEmail(email) => {
                     // TODO: Subimt to api endpoint
                     self.current_mode = Page::Settings;
+                    let tx = match self.tx.clone() {
+                        Some(tx) => tx,
+                        _ => return Ok(None),
+                    };
+                    // tokio::spawn(async move {
+                    //     tx.send(Action::EnterProcessing).unwrap();
+                    //     let req = reqwest::Client::new();
+                    //     match req
+                    //         .post("http://localhost:8080/api/auth/register")
+                    //         .bearer_auth("Some otkne")
+                    //         .send()
+                    //         .await
+                    //     {
+                    //         Ok(res) => {
+                    //             //convert to Calendar to return
+                    //             let data = res.text().await.unwrap_or_default();
+                    //             log::info!("Login successful: {:?}", data);
+                    //         }
+                    //         Err(err) => {
+                    //             log::error!("Failed to login: {}", err);
+                    //             tx.send(Action::EnterNormal).unwrap();
+                    //         }
+                    //     };
+                    // });
                 }
                 _ => {}
             }
@@ -141,7 +168,12 @@ impl App {
         Ok(None)
     }
 
-    pub fn run(&mut self, frame: &mut Frame, rx: &mut UnboundedReceiver<Action>) -> Result<()> {
+    pub fn run(
+        &mut self,
+        frame: &mut Frame,
+        rx: &mut UnboundedReceiver<Action>,
+        tx: &UnboundedSender<Action>,
+    ) -> Result<()> {
         // Send over actions to be handled
         self.handle_actions(rx)?;
         // Show page
