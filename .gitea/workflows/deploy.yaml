@@ -2,15 +2,16 @@ on: [push, pull_request]
 
 name: Continuous integration
 
+env:
+  APP_NAME: ${{vars.REPO}}
+
 jobs:
   build-and-push:
     name: build
     runs-on: ubuntu-latest
-    environment:
-        APP_NAME: $${{vars.REPO}}
     steps:
       - name: Checkout repository
-        uses: ischanx/checkout@v4
+        uses: actions/checkout@v4
         with:
           repository: ${{ vars.OWNER }}/${{ vars.REPO }}
           token: ${{ secrets.TOKEN }} # `GH_PAT` is a secret that contains your PAT

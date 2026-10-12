@@ -1,5 +1,5 @@
 # Build stage
-FROM rust:1.90.0-slim-bullseye AS build
+FROM rust:1.94.0-slim-bookworm AS build
 
 # Install necessary dependencies for build stage
 RUN rustup target add wasm32-unknown-unknown
