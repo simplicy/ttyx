@@ -14,7 +14,7 @@ RUN trunk build --locked --release
 RUN cp -r ./dist /app
 
 # Final image
-FROM debian:bullseye-slim AS final
+FROM debian:bookworm-slim AS final
 
 # Copy the compiled binary
 COPY --from=build /app /app
